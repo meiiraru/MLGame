@@ -1,11 +1,15 @@
 package mlgame;
 
 import cinnamon.gui.Screen;
+import cinnamon.gui.Toast;
 import cinnamon.gui.widgets.ContainerGrid;
 import cinnamon.gui.widgets.types.Button;
 import cinnamon.render.MatrixStack;
 import cinnamon.text.Text;
 import cinnamon.world.Hud;
+import mlgame.brain.Replay;
+import mlgame.brain.ReplayGame;
+import mlgame.brain.Trainer;
 import mlgame.game.Game;
 
 import java.util.Random;
@@ -23,12 +27,19 @@ public class MainMenu extends Screen {
         Button play = new Button(0, 0, 60, 20, Text.of("Play"), b -> client.setScreen(new Game(this, RANDOM.nextLong(), false)));
         grid.addWidget(play);
 
-        Button train = new Button(0, 0, 60, 20, Text.of("Train AI"), b -> {});
-        train.setActive(false);
+        Button train = new Button(0, 0, 60, 20, Text.of("Train AI"), b -> new Thread(() -> {
+            Trainer trainer = new Trainer(this);
+            trainer.startTraining();
+        }).start());
         grid.addWidget(train);
 
-        Button watch = new Button(0, 0, 60, 20, Text.of("Watch Best"), b -> {});
-        watch.setActive(false);
+        Button watch = new Button(0, 0, 60, 20, Text.of("Watch Best"), b -> {
+            Replay replay = Replay.load("best_ai_replay");
+            if (replay != null)
+                client.setScreen(new ReplayGame(this, replay));
+            else
+                Toast.addToast("Replay not found! Please train the AI first");
+        });
         grid.addWidget(watch);
 
         Button exit = new Button(0, 0, 60, 20, Text.of("Exit"), b -> client.window.exit());
