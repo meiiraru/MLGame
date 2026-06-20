@@ -52,8 +52,11 @@ public class Trainer {
             //sort population by fitness (highest to lowest)
             Arrays.sort(population, (a, b) -> Float.compare(b.fitness, a.fitness));
 
+            int top = (int) (POPULATION_SIZE * 0.05f); //top 5%
+            int bot = (int) (POPULATION_SIZE * 0.01f); //bottom 1%
+
             float bestGenFitness = population[0].fitness;
-            float worstGenFitness = population[POPULATION_SIZE - 1].fitness;
+            float worstGenFitness = population[top - 1].fitness;
             System.out.println("Generation " + generation + " | Best: " + bestGenFitness + " | Worst: " + worstGenFitness + " | BestGen: " + bestGen);
 
             //save replay if this is the best run so far
@@ -71,10 +74,7 @@ public class Trainer {
             for (int i = 0; i < 5; i++)
                 nextGen[i] = population[i].copy();
 
-            int top = (int) (POPULATION_SIZE * 0.05f); //top 5%
-            int bot = (int) (POPULATION_SIZE * 0.1f);  //bottom 10%
-
-            //the rest are mutated clones of the top 5% brains as evolution
+            //the rest are mutated clones of the top brains as evolution
             for (int i = 5; i < POPULATION_SIZE - bot; i++) {
                 int parentIndex = i % top;
                 NeuralNetwork child = population[parentIndex].copy();
@@ -84,7 +84,7 @@ public class Trainer {
                 nextGen[i] = child;
             }
 
-            //the last 10% are completely random brains to maintain diversity
+            //the last are completely random brains in hope for a better random strategy
             for (int i = POPULATION_SIZE - bot; i < POPULATION_SIZE; i++)
                 nextGen[i] = new NeuralNetwork(INPUT_SIZE, NEURONS, OUTPUT_SIZE);
 
