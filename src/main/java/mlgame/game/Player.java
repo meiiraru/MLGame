@@ -1,10 +1,12 @@
 package mlgame.game;
 
-import org.joml.Vector2f;
+import cinnamon.math.collision.AABB;
+import cinnamon.math.collision.Hit;
+import org.joml.Vector3f;
 
 public class Player extends GameElement {
 
-    public final Vector2f velocity = new Vector2f();
+    public final Vector3f velocity = new Vector3f();
     public boolean onGround = false;
     public Platform platform = null;
 
@@ -16,12 +18,12 @@ public class Player extends GameElement {
     public void tick() {
         super.tick();
 
-        //apply gravity and platform movement
+        //apply gravity
         if (!onGround)
             velocity.y += Game.GRAVITY;
         else {
+            velocity.x = 0;
             velocity.y = 0;
-            velocity.x = platform != null ? platform.speed : 0;
         }
 
         //check for collisions and adjust velocity accordingly
@@ -49,59 +51,48 @@ public class Player extends GameElement {
     }
 
     public void checkCollision() {
+        //ignore all collisions if the player is moving upwards or stationary
         if (velocity.y <= 0)
             return;
 
-        GameElement resultElement = null;
+        AABB thisBB = getAABBForElement(this);
+        Hit resultCollision = null;
+        Platform resultElement = null;
 
         for (GameElement element : game.elements) {
             //skip the player
             if (element == this)
                 continue;
 
-            //skip if the player is below the element
-            if (element.pos.y < pos.y)
-                continue;
-
-            //get the closest element below the player
-            if (resultElement == null || element.pos.y < resultElement.pos.y)
-                resultElement = element;
+            //sweep test
+            AABB elementBB = getAABBForElement(element);
+            Hit hit = thisBB.sweepAABB(elementBB, velocity);
+            if (hit != null && hit.tNear() >= 0f && (resultCollision == null || hit.tNear() < resultCollision.tNear())) {
+                resultCollision = hit;
+                resultElement = (Platform) element;
+            }
         }
 
-        //check if the player will collide with the platform after applying the velocity using a simple sweep test
-        if (resultElement instanceof Platform targetPlatform) {
+        //no hit - just skip
+        if (resultCollision == null)
+            return;
 
-            //calculate vertical bounds
-            float playerBottom = pos.y + (getHeight() / 2f);
-            float nextPlayerBottom = playerBottom + velocity.y;
-            float platformTop = targetPlatform.pos.y - (targetPlatform.getHeight() / 2f);
+        //no vertical hit - skip
+        if (resultCollision.normal().y > -0.99f)
+            return;
 
-            //check if the player was above the platform and they will cross the top edge
-            if (playerBottom > platformTop || nextPlayerBottom < platformTop)
-                return;
+        //adjust velocity to land on the platform
+        velocity.x *= resultCollision.tNear();
 
-            //calculate horizontal bounds (considering the player's next position)
-            float nextPlayerX = pos.x + velocity.x;
-            float playerLeft = nextPlayerX - (getWidth() / 2f);
-            float playerRight = nextPlayerX + (getWidth() / 2f);
+        //snap the player to the top of the platform
+        float platformTopY = resultElement.pos.y - resultElement.getHeight() / 2f;
+        float targetY = platformTopY - getHeight() / 2f;
+        velocity.y = targetY - pos.y;
 
-            float platformLeft = targetPlatform.pos.x - (targetPlatform.getWidth() / 2f);
-            float platformRight = targetPlatform.pos.x + (targetPlatform.getWidth() / 2f);
-
-            //check if the player will be within the left and right bounds of the platform
-            if (playerRight < platformLeft || playerLeft > platformRight)
-                return;
-
-            //collision detected
-
-            //System.out.println("Collided! y: " + platformTop);
-
-            //adjust velocity and set flags
-            //velocity.mul(tNear);
-            velocity.y = platformTop - playerBottom;
-            onGround = true;
-            platform = targetPlatform;
-        }
+        //apply flags
+        onGround = true;
+        platform = resultElement;
+        platform.hasPlayer = true;
     }
 
     @Override
@@ -112,5 +103,11 @@ public class Player extends GameElement {
     @Override
     public float getHeight() {
         return 20;
+    }
+
+    public static AABB getAABBForElement(GameElement element) {
+        return new AABB()
+                .inflate(element.getWidth() / 2f, element.getHeight() / 2f, 1)
+                .translate(element.pos.x, element.pos.y, 0);
     }
 }

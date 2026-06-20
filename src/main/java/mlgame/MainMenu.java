@@ -28,7 +28,7 @@ public class MainMenu extends Screen {
         grid.addWidget(play);
 
         Button train = new Button(0, 0, 60, 20, Text.of("Train AI"), b -> new Thread(() -> {
-            Trainer trainer = new Trainer(this);
+            Trainer trainer = new Trainer();
             trainer.startTraining();
         }).start());
         grid.addWidget(train);

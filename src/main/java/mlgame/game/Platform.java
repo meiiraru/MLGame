@@ -4,6 +4,7 @@ public class Platform extends GameElement {
 
     public float speed;
     public final float width;
+    public boolean hasPlayer;
 
     public Platform(Game game, int width, float speed) {
         super(game);
@@ -32,6 +33,16 @@ public class Platform extends GameElement {
                 pos.x = game.width - w;
                 speed = -speed;
                 moveTo(pos.x, pos.y);
+            }
+        }
+
+        //move player with platform
+        if (hasPlayer) {
+            if (!game.player.onGround) {
+                hasPlayer = false;
+            } else {
+                float dx = pos.x - oPos.x;
+                game.player.moveTo(game.player.pos.x + dx, game.player.pos.y);
             }
         }
     }

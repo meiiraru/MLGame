@@ -34,27 +34,16 @@ public class Replay {
         return actions;
     }
 
-    public void save(String filename) {
-        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
-        IOUtils.createOrGetPath(path);
-
+    public String serialize() {
         //simple serialization format: "seed;010001010"
         StringBuilder sb = new StringBuilder();
         sb.append(seed).append(";");
         for (Boolean action : actions)
             sb.append(action ? "1" : "0");
-
-        IOUtils.writeFileCompressed(path, sb.toString().getBytes());
+        return sb.toString();
     }
 
-    public static Replay load(String filename) {
-        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
-        byte[] bytes = IOUtils.readFileCompressed(path);
-
-        if (bytes == null)
-            return null;
-
-        String data = new String(bytes);
+    public static Replay deserialize(String data) {
         String[] parts = data.split(";");
         Replay replay = new Replay(Long.parseLong(parts[0]));
 
@@ -63,5 +52,17 @@ public class Replay {
                 replay.actions.add(c == '1');
         }
         return replay;
+    }
+
+    public void save(String filename) {
+        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
+        IOUtils.createOrGetPath(path);
+        IOUtils.writeFileCompressed(path, serialize().getBytes());
+    }
+
+    public static Replay load(String filename) {
+        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
+        byte[] bytes = IOUtils.readFileCompressed(path);
+        return bytes == null ? null : deserialize(new String(bytes));
     }
 }
