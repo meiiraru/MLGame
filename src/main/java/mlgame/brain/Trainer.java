@@ -18,9 +18,9 @@ public class Trainer {
     public static final float MUTATION_RATE = 0.33f;
     public static final float MUTATION_STRENGTH = 0.5f;
 
-    public NeuralNetwork[] population;
+    private static boolean training;
 
-    private boolean training;
+    public NeuralNetwork[] population;
 
     public Trainer() {
         this.population = new NeuralNetwork[POPULATION_SIZE];
