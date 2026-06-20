@@ -1,13 +1,17 @@
 package mlgame.brain;
 
+import cinnamon.Client;
 import cinnamon.gui.Screen;
 import mlgame.game.Game;
 import mlgame.game.GameState;
 
 public class ReplayGame extends Game {
 
+    public static final int REPLAY_DELAY = 10 * Client.TPS;
+
     private final Replay replay;
     private int tickIndex = 0;
+    private int replayDelay = REPLAY_DELAY;
 
     public ReplayGame(Screen parentScreen, Replay replay) {
         super(parentScreen, replay.getSeed(), true);
@@ -25,5 +29,15 @@ public class ReplayGame extends Game {
 
         //continue normal game physics
         super.tick();
+
+        //game over restart
+        if (gameState == GameState.GAME_OVER && --replayDelay <= 0)
+            restartReplay();
+    }
+
+    public void restartReplay() {
+        this.replayDelay = REPLAY_DELAY;
+        this.tickIndex = 0;
+        this.newGame();
     }
 }
