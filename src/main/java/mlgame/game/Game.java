@@ -3,6 +3,7 @@ package mlgame.game;
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;
 import cinnamon.gui.widgets.types.Button;
+import cinnamon.model.GeometryHelper;
 import cinnamon.render.MatrixStack;
 import cinnamon.render.batch.VertexConsumer;
 import cinnamon.text.Style;
@@ -60,7 +61,7 @@ public class Game extends ParentedScreen {
 
     @Override
     protected void addBackButton() {
-        Button closeButton = new Button(width - 4 - 16, 4, 16, 16, null, button -> close());
+        Button closeButton = new Button(super.width - 4 - 16, 4, 16, 16, null, button -> close());
         closeButton.setIcon(new Resource("textures/gui/icons/close.png"));
         closeButton.setTooltip(Text.of("Main Menu"));
         addWidget(closeButton);
@@ -130,7 +131,7 @@ public class Game extends ParentedScreen {
         if (player.onGround) {
             player.velocity.y = -30;
             player.onGround = false;
-            player.velocity.x = player.platform.speed * 2;
+            player.velocity.x = player.platform.velocity.x * 2;
         } else {
             player.velocity.y = 100;
             player.velocity.x = 0;
@@ -211,7 +212,17 @@ public class Game extends ParentedScreen {
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+        //render borders
+        float border = (super.width - width) / 2f;
+        VertexConsumer.MAIN.consume(GeometryHelper.rectangle(matrices, 0, 0, border, height, 0x7F000000));
+        VertexConsumer.MAIN.consume(GeometryHelper.rectangle(matrices, super.width - border, 0, super.width, height, 0x7F000000));
+
+        //render widgets
         super.render(matrices, mouseX, mouseY, delta);
+
+        //translate to the center of the screen
+        matrices.pushMatrix();
+        matrices.translate(border, 0, 0);
 
         //render the game
         matrices.pushMatrix();
@@ -245,6 +256,8 @@ public class Game extends ParentedScreen {
                 );
             }
         }
+
+        matrices.popMatrix();
 
         Text.of(seed).withStyle(Style.EMPTY.italic(true).color(0x33FFFFFF)).render(
                 VertexConsumer.MAIN, matrices,

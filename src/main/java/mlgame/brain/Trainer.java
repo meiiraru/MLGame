@@ -13,10 +13,10 @@ public class Trainer {
 
     public static final int POPULATION_SIZE = 1000;
     public static final int GENERATIONS = 100_000;
-    public static final int NEURONS = 32;
+    public static final int NEURONS = 64;
 
-    public static final float MUTATION_RATE = 0.33f;
-    public static final float MUTATION_STRENGTH = 0.5f;
+    public static final float MUTATION_RATE = 0.5f;
+    public static final float MUTATION_STRENGTH = 1f;
 
     private static boolean training;
 

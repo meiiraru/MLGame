@@ -13,6 +13,7 @@ public abstract class GameElement {
 
     public Vector2f pos = new Vector2f();
     public Vector2f oPos = new Vector2f();
+    public final Vector2f velocity = new Vector2f();
 
     public GameElement(Game game) {
         this.game = game;
@@ -35,12 +36,30 @@ public abstract class GameElement {
 
     public void setPos(float x, float y) {
         oPos.set(pos.set(x, y));
+        wallBounce();
     }
 
     public void moveTo(float x, float y) {
         pos.set(x, y);
+        wallBounce();
+    }
+
+    public void wallBounce() {
+        //check wall collisions
+        float w = getWidth() / 2f;
+
+        if (pos.x - w < 0) {
+            pos.x = w;
+            velocity.x = -velocity.x;
+            //System.out.println("Wall! vx: " + velocity.x);
+        } else if (pos.x + w > game.width) {
+            pos.x = game.width - w;
+            velocity.x = -velocity.x;
+            //System.out.println("Wall! vx: " + velocity.x);
+        }
     }
 
     public abstract float getWidth();
+
     public abstract float getHeight();
 }

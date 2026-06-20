@@ -6,7 +6,6 @@ import org.joml.Vector3f;
 
 public class Player extends GameElement {
 
-    public final Vector3f velocity = new Vector3f();
     public boolean onGround = false;
     public Platform platform = null;
 
@@ -31,23 +30,6 @@ public class Player extends GameElement {
 
         //apply velocity
         moveTo(pos.x + velocity.x, pos.y + velocity.y);
-
-        //check wall collisions
-        float w = getWidth() / 2f;
-        float minX = pos.x - w;
-        float maxX = pos.x + w;
-
-        if (minX < 0) {
-            pos.x = w;
-            velocity.x = -velocity.x;
-            moveTo(pos.x, pos.y);
-            //System.out.println("Wall! vx: " + velocity.x);
-        } else if (maxX > game.width) {
-            pos.x = game.width - w;
-            velocity.x = -velocity.x;
-            moveTo(pos.x, pos.y);
-            //System.out.println("Wall! vx: " + velocity.x);
-        }
     }
 
     public void checkCollision() {
@@ -56,6 +38,7 @@ public class Player extends GameElement {
             return;
 
         AABB thisBB = getAABBForElement(this);
+        Vector3f tempVel = new Vector3f(velocity, 0);
         Hit resultCollision = null;
         Platform resultElement = null;
 
@@ -66,7 +49,7 @@ public class Player extends GameElement {
 
             //sweep test
             AABB elementBB = getAABBForElement(element);
-            Hit hit = thisBB.sweepAABB(elementBB, velocity);
+            Hit hit = thisBB.sweepAABB(elementBB, tempVel);
             if (hit != null && hit.tNear() >= 0f && (resultCollision == null || hit.tNear() < resultCollision.tNear())) {
                 resultCollision = hit;
                 resultElement = (Platform) element;

@@ -47,7 +47,7 @@ public class Environment {
                 state[i++] = p.pos.x / game.width;
                 state[i++] = (p.pos.y - game.player.pos.y) / game.height; //relative distance
                 state[i++] = p.width / game.width;
-                state[i++] = p.speed / 15f;
+                state[i++] = p.velocity.x / 15f;
             } else {
                 //no platform, fill with zeros
                 state[i++] = 0f;
