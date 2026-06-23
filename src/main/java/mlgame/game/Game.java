@@ -194,7 +194,7 @@ public class Game extends ParentedScreen {
 
     public void writeHiScore() {
         Path path = IOUtils.ROOT_FOLDER.resolve("hi_score.moon");
-        IOUtils.createOrGetPath(path);
+        IOUtils.createOrGetFile(path);
         IOUtils.writeFileCompressed(path, String.valueOf(hiScore).getBytes());
     }
 

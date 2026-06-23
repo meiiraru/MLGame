@@ -2,6 +2,8 @@ package mlgame.brain;
 
 import org.joml.Math;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class NeuralNetwork {
 
     public final int[] layers;
@@ -11,6 +13,7 @@ public class NeuralNetwork {
 
     public Replay replay;
     public float fitness = 0; //used for the genetic algorithm
+    public int score = 0;
 
     public NeuralNetwork(int... layers) {
         this.layers = layers;
@@ -66,15 +69,29 @@ public class NeuralNetwork {
     }
 
     //genetic algorithm - tweaks the weights slightly to "learn"
-    public void mutate(float mutationRate, float mutationStrength) {
+    public void mutate(float mutationRate, float mutationStrength, float replaceRate) {
+        ThreadLocalRandom rand = ThreadLocalRandom.current();
+
         for (int i = 1; i < layers.length; i++) {
             for (int j = 0; j < layers[i]; j++) {
-                if (Math.random() < mutationRate)
-                    biases[i][j] += ((float) Math.random() * 2 - 1) * mutationStrength;
+                if (rand.nextFloat() < mutationRate) {
+                    if (rand.nextFloat() < replaceRate)
+                        biases[i][j] = rand.nextFloat() * 2 - 1;
+                    else
+                        biases[i][j] += (float) rand.nextGaussian() * mutationStrength;
+
+                    biases[i][j] = Math.clamp(-2f, 2f, biases[i][j]);
+                }
 
                 for (int k = 0; k < layers[i - 1]; k++) {
-                    if (Math.random() < mutationRate)
-                        weights[i][j][k] += ((float) Math.random() * 2 - 1) * mutationStrength;
+                    if (rand.nextFloat() < mutationRate) {
+                        if (rand.nextFloat() < replaceRate)
+                            weights[i][j][k] = rand.nextFloat() * 2 - 1;
+                        else
+                            weights[i][j][k] += (float) rand.nextGaussian() * mutationStrength;
+
+                        weights[i][j][k] = Math.clamp(-2f, 2f, weights[i][j][k]);
+                    }
                 }
             }
         }
@@ -83,6 +100,9 @@ public class NeuralNetwork {
     //creates an exact copy of this brain
     public NeuralNetwork copy() {
         NeuralNetwork clone = new NeuralNetwork(layers);
+        clone.replay = this.replay;
+        clone.fitness = this.fitness;
+        clone.score = this.score;
 
         for (int i = 1; i < layers.length; i++) {
             System.arraycopy(this.biases[i], 0, clone.biases[i], 0, layers[i]);

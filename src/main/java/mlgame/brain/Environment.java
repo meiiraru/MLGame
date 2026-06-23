@@ -38,8 +38,12 @@ public class Environment {
                 platforms.add((Platform) el);
         }
 
-        //sort platforms by y position to ensure that the neurons get data consistently
-        platforms.sort((p1, p2) -> Float.compare(p1.pos.y, p2.pos.y));
+        //sort platforms by relative distance to the player
+        platforms.sort((p1, p2) -> {
+            float dist1 = Math.abs(p1.pos.y - game.player.pos.y);
+            float dist2 = Math.abs(p2.pos.y - game.player.pos.y);
+            return Float.compare(dist1, dist2);
+        });
 
         for (int j = 0; j < 3; j++) {
             if (j < platforms.size()) {

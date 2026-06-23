@@ -54,14 +54,12 @@ public class Replay {
         return replay;
     }
 
-    public void save(String filename) {
-        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
-        IOUtils.createOrGetPath(path);
+    public void save(Path path) {
+        IOUtils.createOrGetFile(path);
         IOUtils.writeFileCompressed(path, serialize().getBytes());
     }
 
-    public static Replay load(String filename) {
-        Path path = IOUtils.ROOT_FOLDER.resolve(filename + ".replay");
+    public static Replay load(Path path) {
         byte[] bytes = IOUtils.readFileCompressed(path);
         return bytes == null ? null : deserialize(new String(bytes));
     }

@@ -7,7 +7,7 @@ version = "0.0.1"
 val mainClass = "mlgame.Main"
 
 //dependencies
-val cinnamonVersion = "0.4.3"
+val cinnamonVersion = "0.4.4"
 
 val lwjglModules = arrayOf(
     "lwjgl",
