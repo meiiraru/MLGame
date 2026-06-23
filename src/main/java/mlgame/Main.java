@@ -7,7 +7,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class Main {
 
-    private final static int w = 250;
+    private final static int w = 225;
     private final static int h = 400;
     private static float s = 2f;
 

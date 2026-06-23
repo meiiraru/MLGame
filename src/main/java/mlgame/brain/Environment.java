@@ -77,11 +77,8 @@ public class Environment {
 
         //platform standing score
         if (game.player.onGround) {
-            //massive penalty for standing on the same platform
-            if (prevPlatform == game.player.platform)
-                reward -= 5f;
             //reward for standing on a new platform
-            else
+            if (prevPlatform != game.player.platform)
                 reward += 50f;
 
             prevPlatform = game.player.platform;

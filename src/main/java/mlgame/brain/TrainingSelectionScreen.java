@@ -27,7 +27,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
 
     public static final Path TRAININGS_DIR = Path.of(ArgsOptions.WORKING_DIR.getAsString()).resolve("trainings");
 
-    public static final Map<Path, Trainer> TRAININGS = new HashMap<>();
+    private final Map<Path, Trainer> trainings = new HashMap<>();
 
     private final WidgetList trainingsList;
 
@@ -96,7 +96,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
             for (File folder : folders) {
                 if (folder.isDirectory()) {
                     Path trainingPath = folder.toPath();
-                    Trainer trainer = TRAININGS.computeIfAbsent(trainingPath, Trainer::new);
+                    Trainer trainer = trainings.computeIfAbsent(trainingPath, Trainer::new);
 
                     TrainingListEntry entry = new TrainingListEntry(w, trainer);
                     entry.setStyle(Hud.HUD_STYLE);
@@ -146,7 +146,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
                                     }
 
                                     IOUtils.deleteDir(trainingPath);
-                                    TRAININGS.remove(trainingPath);
+                                    trainings.remove(trainingPath);
                                     updateList();
                                 }
                         );
@@ -177,7 +177,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
                     .append("\n")
                     .append("Generation ").append(trainer.generation)
                     .append("\n\n")
-                    .append("Best ").append(trainer.bestScore == Integer.MIN_VALUE ? "N/A" : trainer.bestScore)
+                    .append("Best ").append(trainer.bestFitness == -Float.MAX_VALUE ? "N/A" : String.format("%.0f", trainer.bestFitness))
                     .append(" @ ").append(" Gen ").append(trainer.bestGen == -1 ? "N/A" : trainer.bestGen)
 
             .render(VertexConsumer.MAIN, matrices, getX() + 4, getY() + 4);

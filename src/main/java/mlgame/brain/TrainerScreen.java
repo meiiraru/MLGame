@@ -2,27 +2,33 @@ package mlgame.brain;
 
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;
+import cinnamon.gui.widgets.Container;
 import cinnamon.gui.widgets.ContainerGrid;
+import cinnamon.gui.widgets.Widget;
 import cinnamon.gui.widgets.types.Button;
 import cinnamon.gui.widgets.types.Label;
+import cinnamon.math.Rotation;
+import cinnamon.model.GeometryHelper;
 import cinnamon.render.MatrixStack;
+import cinnamon.render.batch.VertexConsumer;
 import cinnamon.text.Style;
 import cinnamon.text.Text;
-import cinnamon.utils.Alignment;
-import cinnamon.utils.Colors;
-import cinnamon.utils.IOUtils;
-import cinnamon.utils.Resource;
+import cinnamon.utils.*;
 import cinnamon.world.Hud;
+import org.joml.Math;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class TrainerScreen extends ParentedScreen {
 
     private final Trainer trainer;
-    private final WatchService watchService;
+
+    private final List<GraphElement> fitnessHistory = new ArrayList<>();
+    private final Container snapshotContainer = new Container(0, 0);
+    private int lastSnapshotCount = 0;
+    private int maxGen = -1;
 
     private Label runningLabel, savingLabel, genLabel, bestLabel;
     private Button startTraining, stopTraining, replayBest;
@@ -30,15 +36,6 @@ public class TrainerScreen extends ParentedScreen {
     public TrainerScreen(Trainer trainer, Screen parentScreen) {
         super(parentScreen);
         this.trainer = trainer;
-
-        try {
-            this.watchService = FileSystems.getDefault().newWatchService();
-            Path snapshots = trainer.trainingPath.resolve("snapshots");
-            IOUtils.createOrGetDir(snapshots);
-            snapshots.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize WatchService", e);
-        }
     }
 
     @Override
@@ -60,7 +57,7 @@ public class TrainerScreen extends ParentedScreen {
         genLabel = new Label(4, runningLabel.getY() + title.getHeight() + 4, Text.empty(), Alignment.TOP_LEFT);
         addWidget(genLabel);
 
-        //best score
+        //best fitness
         bestLabel = new Label(4, genLabel.getY() + title.getHeight() + 4, Text.empty(), Alignment.TOP_LEFT);
         addWidget(bestLabel);
 
@@ -81,7 +78,7 @@ public class TrainerScreen extends ParentedScreen {
         takeSnapshot.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(takeSnapshot);
 
-        Button viewSnapshots = new Button(0, 0, width - 8, 20, Text.of("View Snapshots"), button -> {});
+        Button viewSnapshots = new Button(0, 0, width - 8, 20, Text.of("View Snapshots"), button -> client.setScreen(new SnapshotViewerScreen(trainer, this)));
         viewSnapshots.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(viewSnapshots);
 
@@ -99,6 +96,10 @@ public class TrainerScreen extends ParentedScreen {
 
         //back button
         super.init();
+
+        //snapshots
+        addWidget(snapshotContainer);
+        rebuildGraph();
     }
 
     @Override
@@ -120,8 +121,8 @@ public class TrainerScreen extends ParentedScreen {
         super.tick();
 
         genLabel.setText(Text.of("Generation: ").append(Text.of(trainer.generation).withStyle(Style.EMPTY.color(Colors.PURPLE))));
-        bestLabel.setText(Text.of("Best Score: ")
-                .append(Text.of(trainer.bestScore > Integer.MIN_VALUE ? trainer.bestScore : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
+        bestLabel.setText(Text.of("Best Fitness: ")
+                .append(Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.0f", trainer.bestFitness) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
                 .append(" @ Gen ")
                 .append(Text.of(trainer.bestGen != -1 ? trainer.bestGen : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
         );
@@ -142,11 +143,109 @@ public class TrainerScreen extends ParentedScreen {
         else
             savingLabel.setText(Text.empty());
 
-        replayBest.setActive(trainer.bestScore > Integer.MIN_VALUE);
+        replayBest.setActive(trainer.bestFitness > -Float.MAX_VALUE);
+
+        if (trainer.snapshots.size() != lastSnapshotCount)
+            rebuildGraph();
+    }
+
+    private void rebuildGraph() {
+        fitnessHistory.clear();
+        snapshotContainer.clear();
+        lastSnapshotCount = trainer.snapshots.size();
+        maxGen = -1;
+
+        fitnessHistory.add(new GraphElement(0, 0, 0, 0));
+
+        if (!trainer.snapshots.isEmpty()) {
+            int y0 = bestLabel.getY() + bestLabel.getHeight() + 12;
+            int y1 = startTraining.getY() - 12;
+
+            int w = width - 8;
+            int h = y1 - y0;
+
+            for (String snapshot : trainer.snapshots) {
+                String[] parts = snapshot.split(",");
+                int gen = Integer.parseInt(parts[0]);
+                float fitness = Float.parseFloat(parts[1]);
+                maxGen = Math.max(maxGen, gen);
+
+                GraphElement element = new GraphElement(0, 0, gen, fitness);
+                fitnessHistory.add(element);
+            }
+
+            //fix elements position
+            for (GraphElement element : fitnessHistory) {
+                int x = 4 + (int) ((float) element.gen / maxGen * w);
+                int y = y1 - (int) (element.fitness / trainer.bestFitness * h);
+                element.setPos(x - GraphElement.r, Math.clamp(y0, y1, y) - GraphElement.r);
+                snapshotContainer.addWidget(element);
+            }
+        }
+
+        fitnessHistory.sort(Comparator.comparingInt(e -> e.gen));
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+        //snapshot widget
+
+        //foreground
+        int y0 = bestLabel.getY() + bestLabel.getHeight() + 12;
+        int y1 = startTraining.getY() - 12;
+        VertexConsumer.MAIN.consume(GeometryHelper.rectangle(matrices, 4, y0, width - 4, y1, 0x7F000000));
+
+        //render lines
+        for (int i = 1; i < fitnessHistory.size(); i++) {
+            GraphElement e0 = fitnessHistory.get(i - 1);
+            GraphElement e1 = fitnessHistory.get(i);
+            VertexConsumer.MAIN.consume(GeometryHelper.line(matrices, e0.getCenterX(), e0.getCenterY(), e1.getCenterX(), e1.getCenterY(), 0.5f, Colors.LIME.argb));
+        }
+
+        //reset tooltip
+        GraphElement.selectedElement = null;
+
+        //render widgets
         super.render(matrices, mouseX, mouseY, delta);
+
+        //texts
+        Style style = Style.EMPTY.outlined(true);
+        Text.of("0").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y1 - 1, Alignment.BOTTOM_LEFT);
+        Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.0f", trainer.bestFitness) : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y0 + 1, Alignment.TOP_LEFT);
+        Text.of(maxGen > -1 ? maxGen : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, width - 4 - 1, y1 - 1, Alignment.BOTTOM_RIGHT);
+        Text.of("Generation").withStyle(style).render(VertexConsumer.MAIN, matrices, width / 2f, y1 - 1, Alignment.BOTTOM_CENTER);
+
+        matrices.pushMatrix();
+        matrices.translate(4 + 1, y0 + (y1 - y0) / 2f, 0);
+        matrices.rotate(Rotation.Z.rotationDeg(-90f));
+        Text.of("Fitness").withStyle(style).render(VertexConsumer.MAIN, matrices, 0, 0, Alignment.TOP_CENTER);
+        matrices.popMatrix();
+    }
+
+    private static class GraphElement extends Widget {
+
+        public static final int r = 1;
+        public static GraphElement selectedElement = null;
+
+        public final int gen;
+        public final float fitness;
+        private final Text tooltip;
+
+        public GraphElement(int x, int y, int gen, float fitness) {
+            super(x, y, r + r, r + r);
+            this.gen = gen;
+            this.fitness = fitness;
+            this.tooltip = Text.of("Gen: " + gen + String.format("\nFitness: %.0f", fitness));
+        }
+
+        @Override
+        public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+            VertexConsumer.MAIN.consume(GeometryHelper.circle(matrices, getCenterX(), getCenterY(), r, 5, Colors.YELLOW.argb));
+
+            if (UIHelper.isMouseOver(this, mouseX, mouseY) && (selectedElement == null || selectedElement == this)) {
+                selectedElement = this;
+                UIHelper.renderTooltip(matrices, mouseX, mouseY, tooltip);
+            }
+        }
     }
 }

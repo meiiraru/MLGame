@@ -27,6 +27,9 @@ public class MainMenu extends Screen {
         Button train = new Button(0, 0, 60, 20, Text.of("Train AI"), b -> client.setScreen(new TrainingSelectionScreen(this)));
         grid.addWidget(train);
 
+        Button about = new Button(0, 0, 60, 20, Text.of("About"), b -> client.setScreen(new AboutScreen(this)));
+        grid.addWidget(about);
+
         Button exit = new Button(0, 0, 60, 20, Text.of("Exit"), b -> client.window.exit());
         grid.addWidget(exit);
 

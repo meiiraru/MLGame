@@ -12,8 +12,7 @@ public class NeuralNetwork {
     public final float[][] biases;
 
     public Replay replay;
-    public float fitness = 0; //used for the genetic algorithm
-    public int score = 0;
+    public float fitness = -Float.MAX_VALUE; //used for the genetic algorithm
 
     public NeuralNetwork(int... layers) {
         this.layers = layers;
@@ -102,7 +101,6 @@ public class NeuralNetwork {
         NeuralNetwork clone = new NeuralNetwork(layers);
         clone.replay = this.replay;
         clone.fitness = this.fitness;
-        clone.score = this.score;
 
         for (int i = 1; i < layers.length; i++) {
             System.arraycopy(this.biases[i], 0, clone.biases[i], 0, layers[i]);
@@ -114,10 +112,13 @@ public class NeuralNetwork {
     }
 
     public String serialize() {
-        //simple serialization to a string format: "layer1,layer2,...;bias1,weight1,weight2,..."
+        //simple serialization to a string format: "fitness;layer1,layer2,...;bias1,weight1,weight2,..."
+        StringBuilder sb = new StringBuilder();
+
+        //fitness
+        sb.append(fitness).append(";");
 
         //layers
-        StringBuilder sb = new StringBuilder();
         for (int layer : layers)
             sb.append(layer).append(",");
 
@@ -137,18 +138,23 @@ public class NeuralNetwork {
     }
 
     public static NeuralNetwork deserialize(String data) {
-        //find the layers first to know how to read the weights and biases
         String[] parts = data.split(";");
-        String[] layerParts = parts[0].split(",");
-        int[] layers = new int[layerParts.length - 1];
+
+        //parse fitness
+        float fitness = Float.parseFloat(parts[0]);
+
+        //find the layers first to know how to read the weights and biases
+        String[] layerParts = parts[1].split(",");
+        int[] layers = new int[layerParts.length];
         for (int i = 0; i < layers.length; i++)
             layers[i] = Integer.parseInt(layerParts[i]);
 
         //create the neural network
         NeuralNetwork nn = new NeuralNetwork(layers);
+        nn.fitness = fitness;
 
         //read the weights and biases
-        String[] weightParts = parts[1].split(",");
+        String[] weightParts = parts[2].split(",");
 
         int index = 0;
         for (int i = 1; i < layers.length; i++) {
