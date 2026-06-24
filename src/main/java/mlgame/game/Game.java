@@ -26,7 +26,7 @@ public class Game extends ParentedScreen {
     public int width = 225;
     public int height = 400;
     public int score = 0, hiScore = 0;
-    public float oldOffset = 0, offset = 0;
+    public float oldOffset = 0, offset = 0, maxOffset = 0;
 
     public long seed;
     public Random random;
@@ -79,7 +79,7 @@ public class Game extends ParentedScreen {
 
     public void newGame() {
         score = 0;
-        oldOffset = offset = 0f;
+        oldOffset = offset = maxOffset = 0f;
         elements.clear();
         random = new Random(seed);
 
@@ -138,16 +138,18 @@ public class Game extends ParentedScreen {
         }
     }
 
+    public void score() {
+        score++;
+    }
+
     @Override
     public void tick() {
         super.tick();
 
-        score = Math.max((int) -player.pos.y, score);
-        oldOffset = offset;
-
         //updates the offset so the player stays visible
-        if (score + 280 > offset)
-            offset = score + 280;
+        maxOffset = Math.max(-player.pos.y, maxOffset);
+        oldOffset = offset;
+        offset = Math.max(offset, maxOffset + 280);
 
         //slowly scroll upwards even if the player is not moving up to keep the game challenging
         if (gameState != GameState.START)

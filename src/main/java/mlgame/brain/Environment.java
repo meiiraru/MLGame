@@ -11,7 +11,6 @@ public class Environment {
 
     private final Game game;
     private int previousScore = 0;
-    private Platform prevPlatform;
 
     public Environment(Game game) {
         this.game = game;
@@ -74,18 +73,9 @@ public class Environment {
 
         game.tick(); //run game logic
 
-        //award score for climbing up
-        float reward = (game.score - previousScore) / 200f;
+        //award score
+        float reward = game.score - previousScore;
         previousScore = game.score;
-
-        //platform standing score
-        if (game.player.onGround) {
-            //reward for standing on a new platform
-            if (prevPlatform != game.player.platform)
-                reward += 5f;
-
-            prevPlatform = game.player.platform;
-        }
 
         return reward;
     }

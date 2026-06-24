@@ -3,6 +3,7 @@ package mlgame.brain;
 import cinnamon.Client;
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;
+import cinnamon.gui.Toast;
 import cinnamon.gui.widgets.WidgetList;
 import cinnamon.gui.widgets.types.Button;
 import cinnamon.gui.widgets.types.ComboBox;
@@ -120,7 +121,7 @@ public class SnapshotViewerScreen extends ParentedScreen {
             String[] parts = snapshot.split(",");
             int generation = Integer.parseInt(parts[0]);
             float fitness = Float.parseFloat(parts[1]);
-            Path path = trainer.trainingPath.resolve(String.format("snapshots/%d_%.0f.replay", generation, fitness));
+            Path path = trainer.trainingPath.resolve("snapshots/" + generation + ".replay");
 
             ReplayButton button = new ReplayButton(w, generation, fitness, path);
             buttons.add(button);
@@ -150,10 +151,12 @@ public class SnapshotViewerScreen extends ParentedScreen {
         public final float fitness;
 
         public ReplayButton(int width, int generation, float fitness, Path path) {
-            super(0, 0, width, 12, Text.of(String.format("Gen %d - Fitness %.0f", generation, fitness)), b -> {
+            super(0, 0, width, 12, Text.of(String.format("Gen %d - Fitness %.2f", generation, fitness)), b -> {
                 Replay replay = Replay.load(path);
                 if (replay != null)
                     Client.getInstance().setScreen(new ReplayGame(Client.getInstance().screen, replay));
+                else
+                    Toast.addToast("Missing replay file!").type(Toast.ToastType.ERROR);
             });
             this.generation = generation;
             this.fitness = fitness;

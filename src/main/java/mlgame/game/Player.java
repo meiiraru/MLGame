@@ -72,6 +72,10 @@ public class Player extends GameElement {
         float targetY = platformTopY - getHeight() / 2f;
         velocity.y = targetY - pos.y;
 
+        //score
+        if (platform != null && platform != resultElement)
+            game.score();
+
         //apply flags
         onGround = true;
         platform = resultElement;

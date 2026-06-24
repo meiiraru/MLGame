@@ -2,6 +2,7 @@ package mlgame.brain;
 
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;
+import cinnamon.gui.Toast;
 import cinnamon.gui.widgets.Container;
 import cinnamon.gui.widgets.ContainerGrid;
 import cinnamon.gui.widgets.Widget;
@@ -83,9 +84,11 @@ public class TrainerScreen extends ParentedScreen {
         actionGrid.addWidget(viewSnapshots);
 
         replayBest = new Button(0, 0, width - 8, 20, Text.of("Replay Best"), button -> {
-            Replay replay = Replay.load(trainer.trainingPath.resolve("best_ai_replay.replay"));
+            Replay replay = Replay.load(trainer.trainingPath.resolve("best.replay"));
             if (replay != null)
                 client.setScreen(new ReplayGame(this, replay));
+            else
+                Toast.addToast("Missing replay file!").type(Toast.ToastType.ERROR);
         });
         replayBest.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(replayBest);
@@ -122,7 +125,7 @@ public class TrainerScreen extends ParentedScreen {
 
         genLabel.setText(Text.of("Generation: ").append(Text.of(trainer.generation).withStyle(Style.EMPTY.color(Colors.PURPLE))));
         bestLabel.setText(Text.of("Best Fitness: ")
-                .append(Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.0f", trainer.bestFitness) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
+                .append(Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.2f", trainer.bestFitness) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
                 .append(" @ Gen ")
                 .append(Text.of(trainer.bestGen != -1 ? trainer.bestGen : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
         );
@@ -211,7 +214,7 @@ public class TrainerScreen extends ParentedScreen {
         //texts
         Style style = Style.EMPTY.outlined(true);
         Text.of("0").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y1 - 1, Alignment.BOTTOM_LEFT);
-        Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.0f", trainer.bestFitness) : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y0 + 1, Alignment.TOP_LEFT);
+        Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.2f", trainer.bestFitness) : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y0 + 1, Alignment.TOP_LEFT);
         Text.of(maxGen > -1 ? maxGen : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, width - 4 - 1, y1 - 1, Alignment.BOTTOM_RIGHT);
         Text.of("Generation").withStyle(style).render(VertexConsumer.MAIN, matrices, width / 2f, y1 - 1, Alignment.BOTTOM_CENTER);
 
@@ -235,7 +238,7 @@ public class TrainerScreen extends ParentedScreen {
             super(x, y, r + r, r + r);
             this.gen = gen;
             this.fitness = fitness;
-            this.tooltip = Text.of("Gen: " + gen + String.format("\nFitness: %.0f", fitness));
+            this.tooltip = Text.of("Gen: " + gen + String.format("\nFitness: %.2f", fitness));
         }
 
         @Override

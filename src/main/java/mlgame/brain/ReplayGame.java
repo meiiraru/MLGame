@@ -7,7 +7,7 @@ import mlgame.game.GameState;
 
 public class ReplayGame extends Game {
 
-    public static final int REPLAY_DELAY = 10 * Client.TPS;
+    public static final int REPLAY_DELAY = 5 * Client.TPS;
 
     private final Replay replay;
     private int tickIndex = 0;
@@ -16,6 +16,12 @@ public class ReplayGame extends Game {
     public ReplayGame(Screen parentScreen, Replay replay) {
         super(parentScreen, replay.getSeed(), true);
         this.replay = replay;
+    }
+
+    @Override
+    public void newGame() {
+        super.newGame();
+        this.gameState = GameState.PLAYING;
     }
 
     @Override

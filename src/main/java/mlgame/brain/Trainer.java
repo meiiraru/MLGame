@@ -121,7 +121,7 @@ public class Trainer {
             if (localBestFitness > bestFitness && localBestReplay != null) {
                 bestFitness = localBestFitness;
                 bestGen = generation;
-                localBestReplay.save(trainingPath.resolve("best_ai_replay.replay"));
+                localBestReplay.save(trainingPath.resolve("best.replay"));
                 snapshot(localBestReplay, bestFitness, generation);
             }
 
@@ -197,7 +197,7 @@ public class Trainer {
             return;
 
         //save the replay snapshot
-        replay.save(trainingPath.resolve(String.format("snapshots/%s_%.0f.replay", generation, fitness)));
+        replay.save(trainingPath.resolve("snapshots/" + generation + ".replay"));
 
         //save the snapshot to the snapshot list
         snapshots.add(generation + "," + fitness);
