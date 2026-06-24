@@ -41,6 +41,7 @@ public class Trainer {
     public int bestGen = -1;
     public int generation = 1;
 
+    public long elapsedTrainingTime;
     public long trainingStartTime;
     public boolean training = false;
     private boolean locked = false;
@@ -221,6 +222,11 @@ public class Trainer {
         //save the snapshot to the snapshot list
         snapshots.add(generation + "," + fitness + ",1");
 
+        //elapsed time
+        long timeNow = System.currentTimeMillis();
+        elapsedTrainingTime += (System.currentTimeMillis() - trainingStartTime);
+        trainingStartTime = timeNow;
+
         //save the data to a file
         saveSnapshotListToFile();
         saveStatsToFile();
@@ -252,7 +258,7 @@ public class Trainer {
     }
 
     public void saveStatsToFile() {
-        //seed1,seed2,...;curr_gen;best_gen;best_fitness;all_time_best
+        //seed1,seed2,...;curr_gen;best_gen;best_fitness;all_time_best;elapsed_training_time
         Path statsFile = trainingPath.resolve("training_stats.moon");
         StringBuilder sb = new StringBuilder();
 
@@ -266,6 +272,7 @@ public class Trainer {
         sb.append(bestGen).append(";");
         sb.append(bestFitness).append(";");
         sb.append(allTimeBest).append(";");
+        sb.append(elapsedTrainingTime).append(";");
 
         IOUtils.writeFileCompressed(statsFile, sb.toString().getBytes());
     }
@@ -285,6 +292,7 @@ public class Trainer {
                 bestGen     = Integer.parseInt(parts[2]);
                 bestFitness = Float.parseFloat(parts[3]);
                 allTimeBest = Float.parseFloat(parts[4]);
+                elapsedTrainingTime = Long.parseLong(parts[5]);
                 return;
             } catch (Exception e) {
                 Client.LOGGER.error("Failed to parse brain data, starting fresh", e);

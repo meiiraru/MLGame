@@ -142,7 +142,7 @@ public class TrainerScreen extends ParentedScreen {
         );
 
         if (trainer.training) {
-            long elapsed = (System.currentTimeMillis() - trainer.trainingStartTime) / 1000;
+            long elapsed = (trainer.elapsedTrainingTime + System.currentTimeMillis() - trainer.trainingStartTime) / 1000;
             runningLabel.setText(Text.of("Training... " + elapsed + "s").withStyle(Style.EMPTY.italic(true).color(Colors.LIME)));
             startTraining.setActive(false);
             stopTraining.setActive(true);
