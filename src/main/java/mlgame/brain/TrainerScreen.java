@@ -158,7 +158,7 @@ public class TrainerScreen extends ParentedScreen {
             savingLabel.setText(Text.empty());
 
         replayBest.setActive(trainer.allTimeBest > -Float.MAX_VALUE);
-        playRandom.setActive(trainer.allTimeBest > -Float.MAX_VALUE);
+        playRandom.setActive(trainer.population != null && trainer.population.length > 0 && trainer.population[0] != null);
 
         if (trainer.snapshots.size() != lastSnapshotCount)
             rebuildGraph();
