@@ -217,9 +217,6 @@ public class Game extends ParentedScreen {
         VertexConsumer.MAIN.consume(GeometryHelper.rectangle(matrices, 0, 0, border, height, 0x7F000000));
         VertexConsumer.MAIN.consume(GeometryHelper.rectangle(matrices, super.width - border, 0, super.width, height, 0x7F000000));
 
-        //render widgets
-        super.render(matrices, mouseX, mouseY, delta);
-
         //translate to the center of the screen
         matrices.pushMatrix();
         matrices.translate(border, 0, 0);
@@ -230,6 +227,9 @@ public class Game extends ParentedScreen {
         for (GameElement element : elements)
             element.render(matrices, delta);
         matrices.popMatrix();
+
+        //render widgets
+        super.render(matrices, mouseX, mouseY, delta);
 
         //render texts
         switch (gameState) {

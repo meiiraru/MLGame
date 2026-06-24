@@ -2,15 +2,11 @@ package mlgame.brain;
 
 import mlgame.game.Game;
 import mlgame.game.GameElement;
-import mlgame.game.GameState;
 import mlgame.game.Platform;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Environment {
 
-    public static final int INPUT_SIZE = 17;
+    public static final int INPUT_SIZE = 13;
     public static final int OUTPUT_SIZE = 1;
 
     private final Game game;
@@ -26,42 +22,49 @@ public class Environment {
         int i = 0;
         float[] state = new float[INPUT_SIZE];
         state[i++] = game.player.pos.x / game.width;
-        state[i++] = (game.player.pos.y + game.offset) / game.height;
+        state[i++] = 1f - ((game.player.pos.y + game.offset) / game.height);
         state[i++] = game.player.velocity.x / 20f;
         state[i++] = game.player.velocity.y / 100f;
         state[i++] = game.player.onGround ? 1.0f : 0.0f;
 
-        //gather the platforms
-        List<Platform> platforms = new ArrayList<>();
+        //gather the closest below and above platforms relative to the player
+        Platform belowPlayer = null;
+        Platform abovePlayer = null;
+
         for (GameElement el : game.elements) {
-            if (el instanceof Platform)
-                platforms.add((Platform) el);
-        }
-
-        //sort platforms by relative distance to the player
-        platforms.sort((p1, p2) -> {
-            float dist1 = Math.abs(p1.pos.y - game.player.pos.y);
-            float dist2 = Math.abs(p2.pos.y - game.player.pos.y);
-            return Float.compare(dist1, dist2);
-        });
-
-        for (int j = 0; j < 3; j++) {
-            if (j < platforms.size()) {
-                Platform p = platforms.get(j);
-                state[i++] = p.pos.x / game.width;
-                state[i++] = (p.pos.y - game.player.pos.y) / game.height; //relative distance
-                state[i++] = p.width / game.width;
-                state[i++] = p.velocity.x / 15f;
-            } else {
-                //no platform, fill with zeros
-                state[i++] = 0f;
-                state[i++] = 0f;
-                state[i++] = 0f;
-                state[i++] = 0f;
+            if (el instanceof Platform p) {
+                if (p.pos.y >= game.player.pos.y) {
+                    if (belowPlayer == null || p.pos.y < belowPlayer.pos.y)
+                        belowPlayer = p;
+                } else {
+                    if (abovePlayer == null || p.pos.y > abovePlayer.pos.y)
+                        abovePlayer = p;
+                }
             }
         }
 
+        //push the platforms
+        i = pushPlatform(belowPlayer, false, state, i);
+        i = pushPlatform(abovePlayer, true, state, i);
+
         return state;
+    }
+
+    private int pushPlatform(Platform p, boolean top, float[] state, int i) {
+        if (p != null) {
+            state[i++] = p.pos.x / game.width;
+            state[i++] = (game.player.pos.y - p.pos.y) / game.height; //relative distance
+            state[i++] = p.width / game.width;
+            state[i++] = p.velocity.x / 15f;
+        } else {
+            //no platform, fill with zeros
+            state[i++] = 0f;
+            state[i++] = top ? 1f : -1f;
+            state[i++] = 0f;
+            state[i++] = 0f;
+        }
+
+        return i;
     }
 
     //steps the game by 1 tick, applies action, returns reward
@@ -72,24 +75,17 @@ public class Environment {
         game.tick(); //run game logic
 
         //award score for climbing up
-        float reward = game.score - previousScore;
+        float reward = (game.score - previousScore) / 200f;
         previousScore = game.score;
 
         //platform standing score
         if (game.player.onGround) {
             //reward for standing on a new platform
             if (prevPlatform != game.player.platform)
-                reward += 50f;
+                reward += 5f;
 
             prevPlatform = game.player.platform;
         }
-
-        //massive fail penalty
-        if (game.gameState == GameState.GAME_OVER)
-            reward -= 1000f;
-
-        //small penalty for passing time
-        reward--;
 
         return reward;
     }

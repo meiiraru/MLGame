@@ -18,8 +18,12 @@ import static mlgame.brain.Environment.OUTPUT_SIZE;
 
 public class Trainer {
 
-    public static final int POPULATION_SIZE = 1000;
     public static final int NEURONS = 96;
+
+    public static final int POPULATION_SIZE = 1000;
+    public static final float ELITISM_COUNT_RATE = 0.1f;
+    public static final float MUTATION_COUNT_RATE = 0.5f;
+    public static final float NEW_RANDOM_RATE = 0.05f;
 
     public static final float MUTATION_RATE = 0.02f;
     public static final float MUTATION_STRENGTH = 0.05f;
@@ -92,26 +96,26 @@ public class Trainer {
             //evaluate the entire population
             for (int i = 0; i < populationSize; i++) {
                 NeuralNetwork brain = population[i];
-                brain.fitness = -Float.MAX_VALUE;
+                float fitness = 0f;
 
                 //simulate each brain across multiple seeds
                 for (long seed : seeds) {
                     float result = evaluateBrain(brain, seed);
-                    brain.fitness = Math.max(brain.fitness, result);
+                    fitness += result;
+                }
 
-                    //update local best fitness
-                    if (brain.fitness > localBestFitness) {
-                        localBestFitness = brain.fitness;
-                        localBestReplay = brain.replay;
-                    }
+                fitness /= seeds.length; //average fitness across seeds
+                brain.fitness = fitness;
+
+                //update local best fitness
+                if (fitness > localBestFitness) {
+                    localBestFitness = fitness;
+                    localBestReplay = brain.replay;
                 }
             }
 
             //sort population by fitness (highest to lowest)
             Arrays.sort(population, (a, b) -> Float.compare(b.fitness, a.fitness));
-
-            int top = (int) (populationSize * 0.2f); //top 20%
-            int bot = (int) (populationSize * 0.1f); //bottom 10%
 
             //save replay if this is the best run so far
             if (localBestFitness > bestFitness && localBestReplay != null) {
@@ -124,13 +128,17 @@ public class Trainer {
             //create the next generation
             NeuralNetwork[] nextGen = new NeuralNetwork[populationSize];
 
+            int elitism = (int) (populationSize * ELITISM_COUNT_RATE);
+            int top     = (int) (populationSize * MUTATION_COUNT_RATE);
+            int bot     = (int) (populationSize * NEW_RANDOM_RATE);
+
             //apply elitism to keep the top 5 brains exactly as they are
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < elitism; i++)
                 nextGen[i] = population[i].copy();
 
             //the rest are mutated clones of the top brains as evolution
-            for (int i = 5; i < populationSize - bot; i++) {
-                int parentIndex = (int) (Math.pow(Math.random(), 2) * top);
+            for (int i = elitism; i < populationSize - bot; i++) {
+                int parentIndex = (int) (Math.random() * top);
                 NeuralNetwork child = population[parentIndex].copy();
 
                 //mutate the children population

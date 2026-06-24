@@ -89,6 +89,8 @@ public class TrainingSelectionScreen extends ParentedScreen {
         IOUtils.createOrGetDir(TRAININGS_DIR);
         File[] folders = TRAININGS_DIR.toFile().listFiles(File::isDirectory);
 
+        trainings.keySet().removeIf(path -> !Files.exists(path));
+
         trainingsList.clear();
         if (folders != null) {
             Arrays.sort(folders, (a, b) -> IOUtils.FilenameComparator.compareTo(a.getName(), b.getName()));
