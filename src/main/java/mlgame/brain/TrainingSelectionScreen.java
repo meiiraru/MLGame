@@ -179,7 +179,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
                     .append("\n")
                     .append("Generation ").append(trainer.generation)
                     .append("\n\n")
-                    .append("Best ").append(trainer.bestFitness == -Float.MAX_VALUE ? "N/A" : String.format("%.2f", trainer.bestFitness))
+                    .append("Best ").append(trainer.allTimeBest == -Float.MAX_VALUE ? "N/A" : String.format("%.2f", trainer.bestFitness))
                     .append(" @ ").append(" Gen ").append(trainer.bestGen == -1 ? "N/A" : trainer.bestGen)
 
             .render(VertexConsumer.MAIN, matrices, getX() + 4, getY() + 4);

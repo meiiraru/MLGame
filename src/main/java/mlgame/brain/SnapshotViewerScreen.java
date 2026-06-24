@@ -119,6 +119,11 @@ public class SnapshotViewerScreen extends ParentedScreen {
         int w = list.getWidth() - list.getScrollbarWidth() - 2 - 1;
         for (String snapshot : trainer.snapshots) {
             String[] parts = snapshot.split(",");
+
+            boolean hasReplay = Integer.parseInt(parts[2]) == 1;
+            if (!hasReplay)
+                continue;
+
             int generation = Integer.parseInt(parts[0]);
             float fitness = Float.parseFloat(parts[1]);
             Path path = trainer.trainingPath.resolve("snapshots/" + generation + ".replay");

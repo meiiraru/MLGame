@@ -29,13 +29,15 @@ public class Trainer {
     public static final float MUTATION_STRENGTH = 0.05f;
     public static final float MUTATION_REPLACE = 0.1f;
 
-    public static final int SNAPSHOT_INTERVAL = 1000;
+    public static final int SNAPSHOT_INTERVAL = 500;
+    public static final int RESEED_INTERVAL = 10;
 
     public final Path trainingPath;
-    public long[] seeds = new long[3];
+    public long[] seeds = new long[10];
 
     public NeuralNetwork[] population;
     public float bestFitness = -Float.MAX_VALUE;
+    public float allTimeBest = -Float.MAX_VALUE;
     public int bestGen = -1;
     public int generation = 1;
 
@@ -84,7 +86,18 @@ public class Trainer {
 
     private void train() {
         trainingStartTime = System.currentTimeMillis();
+        Random random = new Random();
+
         while (training) {
+            //rotate the seeds every couple generations to prevent overfitting
+            if (generation % RESEED_INTERVAL == 0) {
+                for (int i = 0; i < seeds.length; i++)
+                    seeds[i] = random.nextLong();
+
+                //reset best
+                bestFitness = -Float.MAX_VALUE;
+            }
+
             //take a snapshot of the current best
             if (generation % SNAPSHOT_INTERVAL == 0)
                 snapshot();
@@ -117,9 +130,15 @@ public class Trainer {
             //sort population by fitness (highest to lowest)
             Arrays.sort(population, (a, b) -> Float.compare(b.fitness, a.fitness));
 
-            //save replay if this is the best run so far
-            if (localBestFitness > bestFitness && localBestReplay != null) {
+            //store the best run of this group
+            if (localBestFitness > bestFitness) {
                 bestFitness = localBestFitness;
+                snapshots.add(generation + "," + bestFitness + ",0");
+            }
+
+            //snapshot if this is the best run of all time!
+            if (bestFitness > allTimeBest && localBestReplay != null) {
+                allTimeBest = bestFitness;
                 bestGen = generation;
                 localBestReplay.save(trainingPath.resolve("best.replay"));
                 snapshot(localBestReplay, bestFitness, generation);
@@ -157,7 +176,7 @@ public class Trainer {
         locked = false;
     }
 
-    private float evaluateBrain(NeuralNetwork brain, long seed) {
+    public float evaluateBrain(NeuralNetwork brain, long seed) {
         //initialize the game
         Game simGame = new Game(null, seed, true);
         simGame.newGame();
@@ -169,7 +188,7 @@ public class Trainer {
         //initialize the environment
         Environment env = new Environment(simGame);
         float totalReward = 0;
-        float targetReward = 5_000_000; //stop early if we reach this fitness score to save time
+        float targetReward = 1_000; //stop early if we reach this fitness score to save time
         boolean prevJump = false;
 
         //run the game until it is over
@@ -200,7 +219,7 @@ public class Trainer {
         replay.save(trainingPath.resolve("snapshots/" + generation + ".replay"));
 
         //save the snapshot to the snapshot list
-        snapshots.add(generation + "," + fitness);
+        snapshots.add(generation + "," + fitness + ",1");
 
         //save the data to a file
         saveSnapshotListToFile();
@@ -233,10 +252,22 @@ public class Trainer {
     }
 
     public void saveStatsToFile() {
-        //seed1,seed2,...;curr_gen;best_gen;best_fitness
+        //seed1,seed2,...;curr_gen;best_gen;best_fitness;all_time_best
         Path statsFile = trainingPath.resolve("training_stats.moon");
-        String stats = seeds[0] + "," + seeds[1] + "," + seeds[2] + ";" + generation + ";" + bestGen + ";" + bestFitness;
-        IOUtils.writeFileCompressed(statsFile, stats.getBytes());
+        StringBuilder sb = new StringBuilder();
+
+        //seeds
+        for (long seed : seeds)
+            sb.append(seed).append(",");
+        sb.append(";");
+
+        //data
+        sb.append(generation).append(";");
+        sb.append(bestGen).append(";");
+        sb.append(bestFitness).append(";");
+        sb.append(allTimeBest).append(";");
+
+        IOUtils.writeFileCompressed(statsFile, sb.toString().getBytes());
     }
 
     private void loadStatsFromFile() {
@@ -247,13 +278,13 @@ public class Trainer {
             String[] parts = stats.split(";");
             try {
                 String[] seedParts = parts[0].split(",");
-                seeds[0] = Long.parseLong(seedParts[0]);
-                seeds[1] = Long.parseLong(seedParts[1]);
-                seeds[2] = Long.parseLong(seedParts[2]);
+                for (int i = 0; i < seedParts.length; i++)
+                    seeds[i] = Long.parseLong(seedParts[i]);
 
                 generation  = Integer.parseInt(parts[1]);
                 bestGen     = Integer.parseInt(parts[2]);
                 bestFitness = Float.parseFloat(parts[3]);
+                allTimeBest = Float.parseFloat(parts[4]);
                 return;
             } catch (Exception e) {
                 Client.LOGGER.error("Failed to parse brain data, starting fresh", e);
@@ -261,9 +292,8 @@ public class Trainer {
         }
 
         Random random = new Random(System.currentTimeMillis());
-        seeds[0] = random.nextLong();
-        seeds[1] = random.nextLong();
-        seeds[2] = random.nextLong();
+        for (int i = 0; i < seeds.length; i++)
+            seeds[i] = random.nextLong();
     }
 
     public void saveBrainToFile() {

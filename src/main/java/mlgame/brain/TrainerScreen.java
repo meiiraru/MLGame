@@ -32,7 +32,7 @@ public class TrainerScreen extends ParentedScreen {
     private int maxGen = -1;
 
     private Label runningLabel, savingLabel, genLabel, bestLabel;
-    private Button startTraining, stopTraining, replayBest;
+    private Button startTraining, stopTraining, replayBest, playRandom;
 
     public TrainerScreen(Trainer trainer, Screen parentScreen) {
         super(parentScreen);
@@ -93,6 +93,17 @@ public class TrainerScreen extends ParentedScreen {
         replayBest.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(replayBest);
 
+        playRandom = new Button(0, 0, width - 8, 20, Text.of("Play Random Seed"), button -> {
+            trainer.evaluateBrain(trainer.population[0], System.currentTimeMillis());
+            Replay replay = trainer.population[0].replay;
+            if (replay != null)
+                client.setScreen(new ReplayGame(this, replay));
+            else
+                Toast.addToast("Missing replay!").type(Toast.ToastType.ERROR);
+        });
+        playRandom.setStyle(Hud.HUD_STYLE);
+        actionGrid.addWidget(playRandom);
+
         Button openFolder = new Button(0, 0, width - 8, 20, Text.of("Open Training Folder"), button -> IOUtils.openInExplorer(trainer.trainingPath));
         openFolder.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(openFolder);
@@ -125,7 +136,7 @@ public class TrainerScreen extends ParentedScreen {
 
         genLabel.setText(Text.of("Generation: ").append(Text.of(trainer.generation).withStyle(Style.EMPTY.color(Colors.PURPLE))));
         bestLabel.setText(Text.of("Best Fitness: ")
-                .append(Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.2f", trainer.bestFitness) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
+                .append(Text.of(trainer.allTimeBest > -Float.MAX_VALUE ? String.format("%.2f", trainer.allTimeBest) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
                 .append(" @ Gen ")
                 .append(Text.of(trainer.bestGen != -1 ? trainer.bestGen : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
         );
@@ -146,7 +157,8 @@ public class TrainerScreen extends ParentedScreen {
         else
             savingLabel.setText(Text.empty());
 
-        replayBest.setActive(trainer.bestFitness > -Float.MAX_VALUE);
+        replayBest.setActive(trainer.allTimeBest > -Float.MAX_VALUE);
+        playRandom.setActive(trainer.allTimeBest > -Float.MAX_VALUE);
 
         if (trainer.snapshots.size() != lastSnapshotCount)
             rebuildGraph();
@@ -167,10 +179,17 @@ public class TrainerScreen extends ParentedScreen {
             int w = width - 8;
             int h = y1 - y0;
 
-            for (String snapshot : trainer.snapshots) {
+            List<String> snapshots = trainer.snapshots;
+            int skipCount = Math.max(1, snapshots.size() / 100); //skip some snapshots if too many
+            for (int i = 0; i < snapshots.size(); i++) {
+                String snapshot = snapshots.get(i);
                 String[] parts = snapshot.split(",");
-                int gen = Integer.parseInt(parts[0]);
                 float fitness = Float.parseFloat(parts[1]);
+
+                if (fitness != trainer.allTimeBest && i % skipCount != 0)
+                    continue;
+
+                int gen = Integer.parseInt(parts[0]);
                 maxGen = Math.max(maxGen, gen);
 
                 GraphElement element = new GraphElement(0, 0, gen, fitness);
@@ -180,7 +199,7 @@ public class TrainerScreen extends ParentedScreen {
             //fix elements position
             for (GraphElement element : fitnessHistory) {
                 int x = 4 + (int) ((float) element.gen / maxGen * w);
-                int y = y1 - (int) (element.fitness / trainer.bestFitness * h);
+                int y = y1 - (int) (element.fitness / trainer.allTimeBest * h);
                 element.setPos(x - GraphElement.r, Math.clamp(y0, y1, y) - GraphElement.r);
                 snapshotContainer.addWidget(element);
             }
@@ -214,7 +233,7 @@ public class TrainerScreen extends ParentedScreen {
         //texts
         Style style = Style.EMPTY.outlined(true);
         Text.of("0").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y1 - 1, Alignment.BOTTOM_LEFT);
-        Text.of(trainer.bestFitness > -Float.MAX_VALUE ? String.format("%.2f", trainer.bestFitness) : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y0 + 1, Alignment.TOP_LEFT);
+        Text.of(trainer.allTimeBest > -Float.MAX_VALUE ? String.format("%.2f", trainer.allTimeBest) : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, 4 + 1, y0 + 1, Alignment.TOP_LEFT);
         Text.of(maxGen > -1 ? maxGen : "N/A").withStyle(style).render(VertexConsumer.MAIN, matrices, width - 4 - 1, y1 - 1, Alignment.BOTTOM_RIGHT);
         Text.of("Generation").withStyle(style).render(VertexConsumer.MAIN, matrices, width / 2f, y1 - 1, Alignment.BOTTOM_CENTER);
 
