@@ -54,7 +54,7 @@ public class Trainer {
     private float mutationStrength = MUTATION_STRENGTH;
     private float mutationReplace = MUTATION_REPLACE;
 
-    public final List<String> snapshots = new ArrayList<>();
+    public final List<SnapshotData> snapshots = new ArrayList<>();
 
     public Trainer(Path trainingPath) {
         this.trainingPath = trainingPath;
@@ -134,7 +134,7 @@ public class Trainer {
             //store the best run of this group
             if (localBestFitness > bestFitness) {
                 bestFitness = localBestFitness;
-                snapshots.add(generation + "," + bestFitness + ",0");
+                snapshots.add(new SnapshotData(generation, bestFitness, false));
             }
 
             //snapshot if this is the best run of all time!
@@ -220,7 +220,7 @@ public class Trainer {
         replay.save(trainingPath.resolve("snapshots/" + generation + ".replay"));
 
         //save the snapshot to the snapshot list
-        snapshots.add(generation + "," + fitness + ",1");
+        snapshots.add(new SnapshotData(generation, fitness, true));
 
         //elapsed time
         long timeNow = System.currentTimeMillis();
@@ -234,12 +234,12 @@ public class Trainer {
     }
 
     public void saveSnapshotListToFile() {
-        //save the snapshot list to a file format: "generation,fitness;generation,fitness;..."
+        //save the snapshot list to a file format: "generation,fitness,hasFile;generation,fitness,hasFile;..."
         Path snapshotFile = trainingPath.resolve("snapshot_data.moon");
         IOUtils.createOrGetFile(snapshotFile);
         StringBuilder sb = new StringBuilder();
-        for (String snapshot : snapshots)
-            sb.append(snapshot).append(";");
+        for (SnapshotData snapshot : snapshots)
+            sb.append(snapshot.serialize()).append(";");
         IOUtils.writeFileCompressed(snapshotFile, sb.toString().getBytes());
     }
 
@@ -250,10 +250,8 @@ public class Trainer {
             String snapshotData = new String(snapshotBytes);
             String[] snapshotParts = snapshotData.split(";");
             snapshots.clear();
-            for (String snapshot : snapshotParts) {
-                if (!snapshot.isEmpty())
-                    snapshots.add(snapshot);
-            }
+            for (String snapshot : snapshotParts)
+                snapshots.add(SnapshotData.deserialize(snapshot));
         }
     }
 

@@ -142,14 +142,10 @@ public class TrainerScreen extends ParentedScreen {
         );
 
         if (trainer.training) {
-            long elapsed = (trainer.elapsedTrainingTime + System.currentTimeMillis() - trainer.trainingStartTime) / 1000;
-            runningLabel.setText(Text.of("Training... " + elapsed + "s").withStyle(Style.EMPTY.italic(true).color(Colors.LIME)));
-            startTraining.setActive(false);
-            stopTraining.setActive(true);
+            long elapsed = (System.currentTimeMillis() - trainer.trainingStartTime) / 1000;
+            runningLabel.setText(Text.of("Training... " + elapsed + "s (" + (trainer.elapsedTrainingTime / 1000 + elapsed) + "s)").withStyle(Style.EMPTY.italic(true).color(Colors.LIME)));
         } else {
-            runningLabel.setText(Text.of("Not Training").withStyle(Style.EMPTY.italic(true).color(Colors.RED)));
-            startTraining.setActive(true);
-            stopTraining.setActive(false);
+            runningLabel.setText(Text.of("Training Paused").withStyle(Style.EMPTY.italic(true).color(Colors.RED)));
         }
 
         if (trainer.saving)
@@ -157,6 +153,8 @@ public class TrainerScreen extends ParentedScreen {
         else
             savingLabel.setText(Text.empty());
 
+        startTraining.setActive(!trainer.training);
+        stopTraining.setActive(trainer.training);
         replayBest.setActive(trainer.allTimeBest > -Float.MAX_VALUE);
         playRandom.setActive(trainer.population != null && trainer.population.length > 0 && trainer.population[0] != null);
 
@@ -179,17 +177,16 @@ public class TrainerScreen extends ParentedScreen {
             int w = width - 8;
             int h = y1 - y0;
 
-            List<String> snapshots = trainer.snapshots;
+            List<SnapshotData> snapshots = trainer.snapshots;
             int skipCount = Math.max(1, snapshots.size() / 100); //skip some snapshots if too many
             for (int i = 0; i < snapshots.size(); i++) {
-                String snapshot = snapshots.get(i);
-                String[] parts = snapshot.split(",");
-                float fitness = Float.parseFloat(parts[1]);
+                SnapshotData snapshot = snapshots.get(i);
+                float fitness = snapshot.fitness();
 
                 if (fitness != trainer.allTimeBest && i % skipCount != 0)
                     continue;
 
-                int gen = Integer.parseInt(parts[0]);
+                int gen = snapshot.generation();
                 maxGen = Math.max(maxGen, gen);
 
                 GraphElement element = new GraphElement(0, 0, gen, fitness);

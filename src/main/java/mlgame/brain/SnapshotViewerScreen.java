@@ -117,15 +117,12 @@ public class SnapshotViewerScreen extends ParentedScreen {
         buttons.clear();
 
         int w = list.getWidth() - list.getScrollbarWidth() - 2 - 1;
-        for (String snapshot : trainer.snapshots) {
-            String[] parts = snapshot.split(",");
-
-            boolean hasReplay = Integer.parseInt(parts[2]) == 1;
-            if (!hasReplay)
+        for (SnapshotData snapshot : trainer.snapshots) {
+            if (!snapshot.hasReplay())
                 continue;
 
-            int generation = Integer.parseInt(parts[0]);
-            float fitness = Float.parseFloat(parts[1]);
+            int generation = snapshot.generation();
+            float fitness = snapshot.fitness();
             Path path = trainer.trainingPath.resolve("snapshots/" + generation + ".replay");
 
             ReplayButton button = new ReplayButton(w, generation, fitness, path);
