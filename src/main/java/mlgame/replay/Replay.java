@@ -1,4 +1,4 @@
-package mlgame.brain;
+package mlgame.replay;
 
 import cinnamon.utils.IOUtils;
 import java.nio.file.Path;

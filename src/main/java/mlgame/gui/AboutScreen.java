@@ -1,4 +1,4 @@
-package mlgame;
+package mlgame.gui;
 
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;

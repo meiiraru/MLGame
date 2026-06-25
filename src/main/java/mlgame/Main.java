@@ -3,6 +3,7 @@ package mlgame;
 import cinnamon.Cinnamon;
 import cinnamon.Client;
 import cinnamon.events.EventType;
+import mlgame.gui.MainMenu;
 import org.lwjgl.glfw.GLFW;
 
 public class Main {

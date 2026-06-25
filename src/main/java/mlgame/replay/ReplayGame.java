@@ -1,4 +1,4 @@
-package mlgame.brain;
+package mlgame.replay;
 
 import cinnamon.Client;
 import cinnamon.gui.Screen;

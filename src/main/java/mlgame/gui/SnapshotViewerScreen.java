@@ -1,4 +1,4 @@
-package mlgame.brain;
+package mlgame.gui;
 
 import cinnamon.Client;
 import cinnamon.gui.ParentedScreen;
@@ -12,6 +12,10 @@ import cinnamon.render.MatrixStack;
 import cinnamon.text.Text;
 import cinnamon.utils.Resource;
 import cinnamon.world.Hud;
+import mlgame.brain.SnapshotData;
+import mlgame.brain.Trainer;
+import mlgame.replay.Replay;
+import mlgame.replay.ReplayGame;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

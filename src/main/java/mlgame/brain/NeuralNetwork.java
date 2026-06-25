@@ -1,5 +1,6 @@
 package mlgame.brain;
 
+import mlgame.replay.Replay;
 import org.joml.Math;
 
 import java.util.concurrent.ThreadLocalRandom;

@@ -1,4 +1,4 @@
-package mlgame.brain;
+package mlgame.gui;
 
 import cinnamon.Client;
 import cinnamon.gui.ParentedScreen;
@@ -15,6 +15,7 @@ import cinnamon.text.Style;
 import cinnamon.text.Text;
 import cinnamon.utils.*;
 import cinnamon.world.Hud;
+import mlgame.brain.Trainer;
 
 import java.io.File;
 import java.nio.file.Files;

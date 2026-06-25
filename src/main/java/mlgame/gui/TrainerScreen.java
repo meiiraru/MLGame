@@ -1,4 +1,4 @@
-package mlgame.brain;
+package mlgame.gui;
 
 import cinnamon.gui.ParentedScreen;
 import cinnamon.gui.Screen;
@@ -16,6 +16,10 @@ import cinnamon.text.Style;
 import cinnamon.text.Text;
 import cinnamon.utils.*;
 import cinnamon.world.Hud;
+import mlgame.brain.SnapshotData;
+import mlgame.brain.Trainer;
+import mlgame.replay.Replay;
+import mlgame.replay.ReplayGame;
 import org.joml.Math;
 
 import java.util.ArrayList;

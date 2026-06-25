@@ -1,4 +1,4 @@
-package mlgame;
+package mlgame.gui;
 
 import cinnamon.gui.Screen;
 import cinnamon.gui.widgets.ContainerGrid;
@@ -6,7 +6,6 @@ import cinnamon.gui.widgets.types.Button;
 import cinnamon.render.MatrixStack;
 import cinnamon.text.Text;
 import cinnamon.world.Hud;
-import mlgame.brain.TrainingSelectionScreen;
 import mlgame.game.Game;
 
 import java.util.Random;

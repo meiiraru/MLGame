@@ -4,6 +4,7 @@ import cinnamon.Client;
 import cinnamon.utils.IOUtils;
 import mlgame.game.Game;
 import mlgame.game.GameState;
+import mlgame.replay.Replay;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,11 +49,11 @@ public class Trainer {
     private boolean loaded = false;
     public boolean saving = false;
 
-    private int populationSize = POPULATION_SIZE;
-    private int neurons = NEURONS;
-    private float mutationRate = MUTATION_RATE;
-    private float mutationStrength = MUTATION_STRENGTH;
-    private float mutationReplace = MUTATION_REPLACE;
+    public int populationSize = POPULATION_SIZE;
+    public int neurons = NEURONS;
+    public float mutationRate = MUTATION_RATE;
+    public float mutationStrength = MUTATION_STRENGTH;
+    public float mutationReplace = MUTATION_REPLACE;
 
     public final List<SnapshotData> snapshots = new ArrayList<>();
 
@@ -310,7 +311,7 @@ public class Trainer {
 
     public void saveBrainToFile() {
         //save each brain in a string format: "population:neurons:mutationRate:mutationStrength:mutationReplace:brain1:brain2:..."
-        //brain format: "layer1,layer2,...;bias1,weight1,weight2,..."
+        //brain format: "fitness;layer1,layer2,...;bias1,weight1,weight2,..."
         this.saving = true;
         StringBuilder sb = new StringBuilder();
 
