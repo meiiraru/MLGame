@@ -21,7 +21,7 @@ public class Environment {
         int i = 0;
         float[] state = new float[INPUT_SIZE];
         state[i++] = game.player.pos.x / game.width;
-        state[i++] = 1f - ((game.player.pos.y + game.offset) / game.height);
+        state[i++] = 1f - ((game.player.pos.y + game.player.getHeight() / 2f + game.offset) / game.height);
         state[i++] = game.player.velocity.x / 20f;
         state[i++] = game.player.velocity.y / 100f;
         state[i++] = game.player.onGround ? 1.0f : 0.0f;
@@ -32,7 +32,7 @@ public class Environment {
 
         for (GameElement el : game.elements) {
             if (el instanceof Platform p) {
-                if (p.pos.y >= game.player.pos.y) {
+                if (p.pos.y >= game.player.pos.y + game.player.getHeight() / 2f) {
                     if (belowPlayer == null || p.pos.y < belowPlayer.pos.y)
                         belowPlayer = p;
                 } else {
@@ -52,7 +52,7 @@ public class Environment {
     private int pushPlatform(Platform p, boolean top, float[] state, int i) {
         if (p != null) {
             state[i++] = p.pos.x / game.width;
-            state[i++] = (game.player.pos.y - p.pos.y) / game.height; //relative distance
+            state[i++] = (game.player.pos.y + game.player.getHeight() / 2f - (p.pos.y - p.getHeight() / 2f)) / game.height; //relative distance
             state[i++] = p.width / game.width;
             state[i++] = p.velocity.x / 15f;
         } else {

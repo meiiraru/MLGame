@@ -35,6 +35,7 @@ public class TrainerScreen extends ParentedScreen {
     private int lastSnapshotCount = 0;
     private int maxGen = -1;
     private int graphLevel = 5;
+    private float average = -Float.MAX_VALUE;
 
     private Label runningLabel, savingLabel, genLabel, bestLabel;
     private Button startTraining, stopTraining, replayBest, playRandom;
@@ -165,6 +166,9 @@ public class TrainerScreen extends ParentedScreen {
                 .append(Text.of(trainer.allTimeBest > -Float.MAX_VALUE ? String.format("%.2f", trainer.allTimeBest) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
                 .append(" @ Gen ")
                 .append(Text.of(trainer.bestGen != -1 ? trainer.bestGen : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
+                .append(" @ Avg ")
+                .append(Text.of(average > -Float.MAX_VALUE ? String.format("%.2f", average) : "N/A").withStyle(Style.EMPTY.color(Colors.PURPLE)))
+
         );
 
         if (trainer.training) {
@@ -193,6 +197,7 @@ public class TrainerScreen extends ParentedScreen {
         snapshotContainer.clear();
         lastSnapshotCount = trainer.snapshots.size();
         maxGen = -1;
+        average = -Float.MAX_VALUE;
 
         fitnessHistory.add(new GraphElement(0, 0, 0, 0));
 
@@ -226,6 +231,16 @@ public class TrainerScreen extends ParentedScreen {
                 element.setPos(x - GraphElement.r, Math.clamp(y0, y1, y) - GraphElement.r);
                 snapshotContainer.addWidget(element);
             }
+
+            //grab average fitness from the last 100
+            int count = 0;
+            average = 0f;
+            for (int i = fitnessHistory.size() - 1; i >= 0 && count < 100; i--) {
+                GraphElement element = fitnessHistory.get(i);
+                average += element.fitness;
+                count++;
+            }
+            average /= count;
         }
 
         fitnessHistory.sort(Comparator.comparingInt(e -> e.gen));

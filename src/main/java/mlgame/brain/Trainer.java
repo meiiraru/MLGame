@@ -44,6 +44,7 @@ public class Trainer {
 
     public long elapsedTrainingTime;
     public long trainingStartTime;
+    public long lastSaveTime;
     public boolean training = false;
     private boolean locked = false;
     private boolean loaded = false;
@@ -87,7 +88,7 @@ public class Trainer {
     }
 
     private void train() {
-        trainingStartTime = System.currentTimeMillis();
+        lastSaveTime = trainingStartTime = System.currentTimeMillis();
         Random random = new Random();
 
         while (training) {
@@ -104,13 +105,8 @@ public class Trainer {
             if (generation % SNAPSHOT_INTERVAL == 0)
                 snapshot();
 
-            //local best fitness
-            float localBestFitness = -Float.MAX_VALUE;
-            Replay localBestReplay = null;
-
             //evaluate the entire population
-            for (int i = 0; i < populationSize; i++) {
-                NeuralNetwork brain = population[i];
+            Arrays.stream(population).parallel().forEach(brain -> {
                 float fitness = 0f;
 
                 //simulate each brain across multiple seeds
@@ -121,29 +117,25 @@ public class Trainer {
 
                 fitness /= seeds.length; //average fitness across seeds
                 brain.fitness = fitness;
+            });
 
-                //update local best fitness
-                if (fitness > localBestFitness) {
-                    localBestFitness = fitness;
-                    localBestReplay = brain.replay;
-                }
-            }
+
 
             //sort population by fitness (highest to lowest)
             Arrays.sort(population, (a, b) -> Float.compare(b.fitness, a.fitness));
 
             //store the best run of this group
-            if (localBestFitness > bestFitness) {
-                bestFitness = localBestFitness;
+            if (population[0].fitness > bestFitness) {
+                bestFitness = population[0].fitness;
                 snapshots.add(new SnapshotData(generation, bestFitness, false));
             }
 
             //snapshot if this is the best run of all time!
-            if (bestFitness > allTimeBest && localBestReplay != null) {
+            if (bestFitness > allTimeBest && population[0].replay != null) {
                 allTimeBest = bestFitness;
                 bestGen = generation;
-                localBestReplay.save(trainingPath.resolve("best.replay"));
-                snapshot(localBestReplay, bestFitness, generation);
+                population[0].replay.save(trainingPath.resolve("best.replay"));
+                snapshot(population[0].replay, bestFitness, generation);
             }
 
             //create the next generation
@@ -231,8 +223,8 @@ public class Trainer {
 
         //elapsed time
         long timeNow = System.currentTimeMillis();
-        elapsedTrainingTime += (System.currentTimeMillis() - trainingStartTime);
-        trainingStartTime = timeNow;
+        elapsedTrainingTime += (System.currentTimeMillis() - lastSaveTime);
+        lastSaveTime = timeNow;
 
         //save the data to a file
         saveSnapshotListToFile();
