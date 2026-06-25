@@ -193,7 +193,7 @@ public class Trainer {
         boolean prevJump = false;
 
         //run the game until it is over
-        while (simGame.gameState != GameState.GAME_OVER && totalReward < targetReward) {
+        while (simGame.gameState != GameState.GAME_OVER) {
             //send the environment state to the brain and get the next action
             float[] state = env.getState();
             boolean jump = !prevJump && brain.predict(state);
@@ -203,6 +203,12 @@ public class Trainer {
             float reward = env.step(jump);
             totalReward += reward;
             prevJump = jump;
+
+            if (totalReward >= targetReward) {
+                Client.LOGGER.info("Early stopping brain evaluation at generation %s due to reaching target reward of %s", generation, targetReward);
+                totalReward *= 2f; //bonus for reaching the target reward
+                break;
+            }
         }
 
         return totalReward;

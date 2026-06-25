@@ -30,6 +30,7 @@ public class TrainerScreen extends ParentedScreen {
     private final Container snapshotContainer = new Container(0, 0);
     private int lastSnapshotCount = 0;
     private int maxGen = -1;
+    private int graphLevel = 5;
 
     private Label runningLabel, savingLabel, genLabel, bestLabel;
     private Button startTraining, stopTraining, replayBest, playRandom;
@@ -108,6 +109,27 @@ public class TrainerScreen extends ParentedScreen {
         openFolder.setStyle(Hud.HUD_STYLE);
         actionGrid.addWidget(openFolder);
 
+        //graph buttons
+        ContainerGrid graphButtonGrid = new ContainerGrid(width - 4, startTraining.getY() - 12, 2, 2);
+        graphButtonGrid.setAlignment(Alignment.TOP_RIGHT);
+        addWidget(graphButtonGrid);
+
+        Button minus = new Button(0, 0, 8, 8, Text.of("-"), button -> {
+            graphLevel = Math.clamp(1, 10, graphLevel - 1);
+            rebuildGraph();
+        });
+        minus.setTooltip(Text.of("Show Less"));
+        minus.setStyle(Hud.HUD_STYLE);
+        graphButtonGrid.addWidget(minus);
+
+        Button plus = new Button(0, 0, 8, 8, Text.of("+"), button -> {
+            graphLevel = Math.clamp(1, 10, graphLevel + 1);
+            rebuildGraph();
+        });
+        plus.setTooltip(Text.of("Show More"));
+        plus.setStyle(Hud.HUD_STYLE);
+        graphButtonGrid.addWidget(plus);
+
         //back button
         super.init();
 
@@ -178,12 +200,12 @@ public class TrainerScreen extends ParentedScreen {
             int h = y1 - y0;
 
             List<SnapshotData> snapshots = trainer.snapshots;
-            int skipCount = Math.max(1, snapshots.size() / 100); //skip some snapshots if too many
+            int skipCount = Math.max(1, snapshots.size() / (20 * graphLevel)); //skip some snapshots if too many
             for (int i = 0; i < snapshots.size(); i++) {
                 SnapshotData snapshot = snapshots.get(i);
                 float fitness = snapshot.fitness();
 
-                if (fitness != trainer.allTimeBest && i % skipCount != 0)
+                if (fitness != trainer.allTimeBest && i % skipCount != 0 && !snapshot.hasReplay())
                     continue;
 
                 int gen = snapshot.generation();

@@ -2,6 +2,11 @@ package mlgame.brain;
 
 import cinnamon.Client;
 import cinnamon.gui.Screen;
+import cinnamon.render.MatrixStack;
+import cinnamon.render.batch.VertexConsumer;
+import cinnamon.text.Style;
+import cinnamon.text.Text;
+import cinnamon.utils.Alignment;
 import mlgame.game.Game;
 import mlgame.game.GameState;
 
@@ -45,5 +50,13 @@ public class ReplayGame extends Game {
         this.replayDelay = REPLAY_DELAY;
         this.tickIndex = 0;
         this.newGame();
+    }
+
+    @Override
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+        super.render(matrices, mouseX, mouseY, delta);
+
+        Text.of("Replay Mode").withStyle(Style.EMPTY.outlined(true))
+                .render(VertexConsumer.MAIN, matrices, width - 4, height - 4, Alignment.BOTTOM_RIGHT);
     }
 }

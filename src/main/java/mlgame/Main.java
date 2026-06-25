@@ -14,7 +14,7 @@ public class Main {
     public static void main(String... args) {
         Client.mainScreen = MainMenu::new;
         Cinnamon.NAMESPACE = "mlgame";
-        Cinnamon.TITLE = "Machine Learning Game";
+        Cinnamon.TITLE = "The Jumper";
         Cinnamon.WIDTH = (int) (w * s);
         Cinnamon.HEIGHT = (int) (h * s);
         Client client = Client.getInstance();

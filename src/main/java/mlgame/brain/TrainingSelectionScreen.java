@@ -27,7 +27,7 @@ public class TrainingSelectionScreen extends ParentedScreen {
 
     public static final Path TRAININGS_DIR = Path.of(ArgsOptions.WORKING_DIR.getAsString()).resolve("trainings");
 
-    private final Map<Path, Trainer> trainings = new HashMap<>();
+    private static final Map<Path, Trainer> trainings = new HashMap<>();
 
     private final WidgetList trainingsList;
 
